@@ -6,6 +6,7 @@ import calendar
 import numpy as np
 import re
 from datetime import datetime
+import config
 
 # --- CONFIGURATION ---
 DATA_FOLDER = r"demo_data" # Updated to point to the demo folder
@@ -46,56 +47,20 @@ class FinancialBrain:
         self.current_year_filter = "All Years"
         self.load_status = "Waiting..."
 
-    def translate_category(self, cat):
-        # The demo data generates categories in English (e.g., 'Groceries'), 
-        # so we mostly just need to clean whitespace/formatting.
-        cat = str(cat).strip()
-        
-        # Detect Hebrew Bank Categories (from generate_demo.py)
-        if 'משכורת' in cat: return 'Salary'
-        if 'משכנתא' in cat: return 'Mortgage'
-        if 'כרטיסי אשראי' in cat: return 'Credit Cards'
-        if 'הוראת קבע' in cat: return 'Standing Orders' # Often Utilities in bank
-
-        # Return Title Case for English (e.g. "groceries" -> "Groceries")
-        return cat.title()
-
     def get_category_from_keywords(self, desc):
+        """
+        Scans the description against keywords defined in config.CATEGORY_RULES.
+        Returns the first matching category or 'Other'.
+        """
+
         desc = str(desc).upper()
-        
-        # --- DEMO DATA MAPPINGS ---
-        
-        # Income / Bank Specific
-        if 'SALARY' in desc or 'משכורת' in desc: return 'Salary'
-        if 'MORTGAGE' in desc or 'משכנתא' in desc: return 'Mortgage'
-        if 'BIT TRANSFER' in desc: return 'Income'
-        if 'REFUND' in desc: return 'Income'
-        if 'CREDIT CARD' in desc or 'כרטיסי אשראי' in desc or 'מקס איט' in desc: return 'Credit Cards'
 
-        # Utilities
-        if 'ELECTRIC CO' in desc or 'WATER BILL' in desc or 'ARNONA' in desc or 'BEZEQ' in desc: return 'Utilities'
-
-        # Groceries
-        if any(x in desc for x in ['SUPER YUDA', 'SHUFERSAL', 'RAMI LEVY', 'VICTORY', 'AM:PM', 'MEGA', 'TIV TAAM']):
-            return 'Groceries'
-
-        # Restaurants
-        if any(x in desc for x in ['AROMA', 'MCDONALDS', 'DOMINOS', 'GOLDA', 'ARCAFFE', 'BENEDICT', 'GIRAFFE']):
-            return 'Restaurants'
-
-        # Transport
-        if any(x in desc for x in ['PANGO', 'PAZ FUEL', 'DELEK', 'TRAIN ISRAEL', 'LIME', 'MOOVIT']):
-            return 'Transport'
-
-        # Shopping
-        if any(x in desc for x in ['ZARA', 'H&M', 'SUPER PHARM', 'FOX', 'TERMINAL X', 'KSP', 'IVORY']):
-            return 'Shopping'
-
-        # Entertainment
-        if any(x in desc for x in ['NETFLIX', 'SPOTIFY', 'CINEMA CITY', 'STEAM', 'PLAYSTATION']):
-            return 'Entertainment'
-
-        return 'Other'
+        for category, keywords in config.CATEGORY_RULES.items():
+            for keyword in keywords:
+                if keyword in desc:
+                    return category
+                
+        return "Other"
 
     def parse_info_from_filename(self, filename):
         try:
@@ -188,10 +153,7 @@ class FinancialBrain:
 
             # Demo CC files have explicit 'קטגוריה' column
             cat_col = next((c for c in df.columns if 'קטגוריה' in c or 'ענף' in c), None)
-            if cat_col:
-                normalized['Category'] = df[cat_col].fillna('Other').apply(self.translate_category)
-            else:
-                normalized['Category'] = normalized['Raw_Desc'].apply(self.get_category_from_keywords)
+            normalized['Category'] = normalized['Raw_Desc'].apply(self.get_category_from_keywords)
 
         normalized['Date_Obj'] = pd.to_datetime(normalized['Date_Raw'], dayfirst=True, errors='coerce')
         normalized.dropna(subset=['Date_Obj'], inplace=True)
@@ -649,7 +611,6 @@ def dashboard():
     def render_breakdown_card(container, title, items, is_income):
         if is_income: header_icon, header_color, progress_color, border_color = 'trending_up', 'text-green-400', 'green-500', 'border-emerald-500'
         else: header_icon, header_color, progress_color, border_color = 'trending_down', 'text-red-400', 'red-500', 'border-rose-500'
-        icon_map = {'Salary': 'work', 'National Insurance': 'account_balance', 'Credit Cards': 'credit_card', 'Mortgage': 'home', 'Stocks Investment': 'trending_up', 'Other': 'attach_money', 'Groceries': 'shopping_cart', 'Utilities': 'bolt', 'Health': 'medical_services', 'Transport': 'directions_car', 'Shopping': 'shopping_bag', 'Entertainment': 'movie', 'Restaurants': 'restaurant', 'Communication': 'wifi', 'Pets': 'pets', 'Education': 'school', 'Electronics': 'computer', 'Travel': 'flight', 'AI': 'smart_toy', 'Subscription': 'subscriptions', 'Abroad Orders': 'flight_takeoff', 'Crypto': 'currency_bitcoin', 'Online Orders': 'shopping_cart'}
         with container:
             with ui.card().classes(f'w-full p-6 rounded-xl shadow-sm border border-slate-700 bg-slate-700 border-t-4 {border_color}'):
                 with ui.row().classes('items-center gap-2 mb-1'):
@@ -661,7 +622,7 @@ def dashboard():
                             with ui.column().classes('w-full gap-2'):
                                 with ui.row().classes('w-full justify-between items-start'):
                                     with ui.row().classes('items-center gap-3'):
-                                        icon_name = icon_map.get(item['category'], 'attach_money')
+                                        icon_name = config.CATEGORY_ICONS.get(item["category"], "attach_money")
                                         with ui.element('div').classes('p-2 rounded-lg bg-slate-600'): ui.icon(icon_name).classes(f'h-5 w-5 {header_color}')
                                         with ui.column().classes('gap-0'):
                                             with ui.label(item['category']).classes('font-medium text-slate-200 text-base cursor-help'):
@@ -844,7 +805,7 @@ def dashboard():
                                     ui.label(title).classes('font-bold text-base'); ui.markdown(desc).classes('text-base opacity-90')
 
     def startup():
-        status = brain.load_folder(DATA_FOLDER)
+        status = brain.load_folder(config.DATA_FOLDER)
         if "Error" in status:
             ui.notify(status, type='negative')
         else:
