@@ -1,0 +1,13 @@
+Bank Hapoalim Ltd. - Branch 123
+Account Name: Eran Mani
+Account Number: 12-345-678
+Date Produced: 12/12/2025
+
+Date,Description,Reference,Debit,Credit,Balance
+01/01/2024,December Salary,990011,,18000,18000
+02/01/2024,Mortgage Payment,555444,4500,,13500
+05/01/2024,Check Deposit,112233,,"1,200",14700
+10/01/2024,Bit Transfer,888777,,250,14950
+15/01/2024,Credit Card Charge,444333,5200,,9750
+
+Total,,,-9700,19450,
