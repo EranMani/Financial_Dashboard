@@ -17,7 +17,11 @@ def dashboard():
             .nicegui-tabs .q-tab__indicator { height: 3px; background: #3b82f6; }
         </style>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    ''')    
+    ''') 
+
+    # 1. Load Data
+    if engine.master_df.empty:
+        engine.load_data()   
     
     view_state = {'chart_mode': 'pie'}
     
@@ -125,6 +129,7 @@ def dashboard():
 
                     def nav_year(direction):
                         years = engine.available_years
+                        print(years)
                         if not years: return
                         try:
                             idx = years.index(sel_year.value)
@@ -227,9 +232,7 @@ def dashboard():
                         }).classes('h-full w-full')
 
     # --- STARTUP ---
-    # 1. Load Data
-    if engine.master_df.empty:
-        engine.load_data()
+    
     
     # 2. Init Dropdowns
     sel_year.options = engine.available_years

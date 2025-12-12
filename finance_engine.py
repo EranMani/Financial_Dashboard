@@ -36,7 +36,7 @@ class FinanceEngine:
             self.available_years = ["All Years"] + unique_years
 
         # Make sure the app starts with an active dataframe instead of seeing blank screen
-        self.filter_data("All Years", "All Mnoths")
+        self.filter_data("All Years", "All Months")
         return f"Loaded {len(self.master_df)} transactions"
     
     def filter_data(self, year, month):
