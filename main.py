@@ -88,24 +88,49 @@ def dashboard():
 
     def render_breakdown_card(title, items, is_income):
         with ui.card().classes('p-6 rounded-xl border border-slate-700 bg-slate-800 shadow-sm h-full'):
+            # --- Header ---
             with ui.row().classes('items-center justify-between w-full mb-6'):
                 with ui.row().classes('items-center gap-3'):
+                    # Small colored pill next to title
                     with ui.element('div').classes(f'w-1 h-6 rounded-full {"bg-emerald-500" if is_income else "bg-rose-500"}'): pass
                     ui.label(title).classes('text-lg font-bold text-slate-100')
                 ui.button(icon='more_horiz').props('flat round dense color=grey-6')
             
+            # --- List Area ---
             with ui.scroll_area().classes('h-64 pr-4'):
                 if not items:
                     ui.label("No data available").classes('text-slate-500 italic')
+                
                 for item in items:
+                    icon_name = item.get('icon', 'circle') 
+                    
+                    # 1. Determine Color
+                    bar_color = "bg-emerald-500" if is_income else "bg-rose-500"
+                    
+                    # 2. Row Container
                     with ui.row().classes('w-full justify-between items-center mb-4 group cursor-pointer hover:bg-slate-700/30 p-2 rounded-lg transition-colors'):
-                        with ui.row().classes('items-center gap-3'):
+                        
+                        # Left Side: Icon + Details
+                        with ui.row().classes('items-center gap-3 flex-grow'):
+                            # Icon Box
                             with ui.element('div').classes('p-2 rounded-lg bg-slate-700 text-slate-300 group-hover:text-white group-hover:bg-blue-500/20 transition-all'):
-                                ui.icon(item.get('icon', 'circle'), size='xs') # Use icon from engine
-                            with ui.column().classes('gap-0.5'):
-                                ui.label(item['category']).classes('font-medium text-slate-200 text-sm')
-                                ui.label(f"{item['pct']}%").classes('text-xs text-slate-500')
-                        ui.label(f"{item['amount']:,.0f} ₪").classes('font-bold text-slate-200 text-sm')
+                                ui.icon(icon_name, size='xs')
+                            
+                            # Text & Progress Bar Column (Added flex-grow so the bar takes available space)
+                            with ui.column().classes('gap-1 flex-grow min-w-[100px]'):
+                                # Row for Name and %
+                                with ui.row().classes('justify-between w-full'):
+                                    ui.label(item['category']).classes('font-medium text-slate-200 text-sm')
+                                    ui.label(f"{item['pct']}%").classes('text-xs text-slate-500')
+                                
+                                # THE PROGRESS BAR
+                                # Outer gray background
+                                with ui.element('div').classes('w-full h-1.5 rounded-full bg-slate-700 overflow-hidden'):
+                                    # Inner colored bar with dynamic width
+                                    ui.element('div').classes(f'h-full rounded-full {bar_color}').style(f"width: {item['pct']}%")
+
+                        # Right Side: Amount (Fixed width to prevent jumping)
+                        ui.label(f"{item['amount']:,.0f} ₪").classes('font-bold text-slate-200 text-sm ml-4')
 
     # --- LAYOUT CONSTRUCTION ---
     with ui.column().classes('w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6'):
