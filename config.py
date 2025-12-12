@@ -1,7 +1,7 @@
 # config.py
 
 # --- 1. SYSTEM CONFIGURATION ---
-DATA_FOLDER = r"demo_data"
+DATA_FOLDER = r"D:\AI\Financial_Dashboard\demo_data"
 
 # --- 2. CATEGORY CLASSIFICATION RULES ---
 # Dictionary format: { "Category Name": ["keyword1", "keyword2", ...] }
