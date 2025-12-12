@@ -205,9 +205,9 @@ def dashboard():
                              ui.label('Premium Plan').classes('text-xs text-emerald-400')
 
         # --- TABS ---
-        with ui.tabs().classes('bg-transparent mb-6') as tabs:
-            tab_overview = ui.tab('Overview')
-            tab_transactions = ui.tab('Transactions')
+        with ui.tabs().classes('bg-transparent mb-2 w-full justify-center') as tabs:
+            tab_overview = ui.tab('Overview', icon="dashboard")
+            tab_transactions = ui.tab('Transactions', icon="receipt_long")
 
         # --- PANELS ---
         with ui.tab_panels(tabs, value=tab_overview).classes('w-full bg-transparent'):
@@ -237,24 +237,111 @@ def dashboard():
 
             # 2. TRANSACTIONS TAB
             with ui.tab_panel(tab_transactions).classes('p-0 mt-6'):
+                
+                # Split layout: 1/3 for Pie Chart, 2/3 for Transaction List
                 with ui.grid().classes('grid-cols-1 lg:grid-cols-3 gap-6 w-full'):
-                    # Pie Chart Card
-                    with ui.card().classes('lg:col-span-1 p-6 rounded-xl shadow-sm border border-slate-700 bg-slate-800 h-[500px] flex flex-col'):
-                        ui.label('Expense Analysis').classes('font-bold text-xl text-slate-100 mb-4')
-                        chart_cat = ui.echart({
-                            'tooltip': {'trigger': 'item'},
-                            'legend': {'top': '5%', 'left': 'center', 'textStyle': {'color': '#94a3b8'}},
-                            'series': [{
-                                'name': 'Category',
-                                'type': 'pie',
-                                'radius': ['40%', '70%'],
-                                'avoidLabelOverlap': False,
-                                'itemStyle': {'borderRadius': 10, 'borderColor': '#1e293b', 'borderWidth': 2},
-                                'label': {'show': False, 'position': 'center'},
-                                'emphasis': {'label': {'show': True, 'fontSize': 20, 'fontWeight': 'bold', 'color': 'white'}},
-                                'data': []
-                            }]
-                        }).classes('h-full w-full')
+                    
+                    # --- LEFT COLUMN: PIE CHART ---
+                    # Added 'justify-between' to space out header and chart
+                    with ui.card().classes('lg:col-span-1 p-6 rounded-xl shadow-sm border border-slate-700 bg-slate-800 h-[650px] flex flex-col'):
+                        
+                        # Header Section (Fixed at top)
+                        with ui.column().classes('w-full gap-1'):
+                            ui.label('Expense Analysis').classes('font-bold text-xl text-slate-100')
+                            ui.label('Click a slice to view details').classes('text-xs text-slate-400')
+                        
+                        # Chart Section (Takes remaining space)
+                        # 'flex-grow' pushes it to fill height, 'items-center' centers it
+                        with ui.column().classes('w-full flex-grow justify-center items-center overflow-hidden'):
+                            chart_cat = ui.echart({
+                                'tooltip': {'trigger': 'item'},
+                                'legend': {
+                                    'bottom': '0%', 
+                                    'left': 'center', 
+                                    'textStyle': {'color': '#94a3b8'}
+                                },
+                                'series': [{
+                                    'name': 'Category',
+                                    'type': 'pie',
+                                    'radius': ['45%', '75%'],
+                                    'center': ['50%', '50%'], # Perfectly centered in the container
+                                    'avoidLabelOverlap': False,
+                                    'itemStyle': {
+                                        'borderRadius': 10, 
+                                        'borderColor': '#1e293b', 
+                                        'borderWidth': 2
+                                    },
+                                    'label': {'show': False, 'position': 'center'},
+                                    'emphasis': {
+                                        'label': {
+                                            'show': True, 
+                                            'fontSize': 18, 
+                                            'fontWeight': 'bold', 
+                                            'color': 'white'
+                                        }
+                                    },
+                                    'data': [] 
+                                }]
+                            }).classes('h-full w-full')
+
+                    # --- RIGHT COLUMN: DETAILS TABLE ---
+                    with ui.card().classes('lg:col-span-2 p-6 rounded-xl shadow-sm border border-slate-700 bg-slate-800 h-[650px] flex flex-col') as tx_details_container:
+                        
+                        # Default Empty State (Centered)
+                        with ui.column().classes('w-full h-full justify-center items-center opacity-50'):
+                            ui.icon('touch_app', size='4xl').classes('text-slate-600 mb-4')
+                            ui.label('Select a category to view transactions').classes('text-slate-500 text-lg')
+
+                # --- INTERACTIVITY LOGIC ---
+                
+                def show_category_details(category):
+                    txs = engine.get_transactions_by_category(category)
+                    icon = config.CATEGORY_ICONS.get(category, 'circle')
+
+                    tx_details_container.clear()
+                    with tx_details_container:
+                        # 1. Header (Fixed Height)
+                        with ui.row().classes('w-full justify-between items-center mb-4'):
+                            with ui.row().classes('items-center gap-3'):
+                                with ui.element('div').classes('p-2 rounded-lg bg-slate-700 text-slate-300'):
+                                    ui.icon(icon)
+                                with ui.column().classes('gap-0'):
+                                    ui.label(f"{category} Transactions").classes('text-xl font-bold text-slate-100')
+                                    ui.label(f"{len(txs)} records found").classes('text-xs text-slate-400')
+                            
+                            ui.button(icon='close', on_click=lambda: reset_details_view()).props('flat round dense color=grey')
+
+                        # 2. Table (Fills remaining height)
+                        if not txs:
+                            with ui.column().classes('w-full flex-grow justify-center items-center'):
+                                ui.label("No transactions found.").classes('text-slate-500 italic')
+                        else:
+                            # 'flex-grow' forces the table to stretch to the bottom of the card
+                            # 'sticky-header' keeps the header fixed while scrolling rows
+                            ui.aggrid({
+                                'columnDefs': [
+                                    {'headerName': 'Date', 'field': 'Date', 'filter': True},
+                                    {'headerName': 'Description', 'field': 'Description', 'filter': True},
+                                    {'headerName': 'Amount', 'field': 'Amount', 'filter': True}
+                                ],
+                                'rowData': txs,
+                                'pagination': {'rowsPerPage': 8},
+                                'paginationPageSize': 8,
+                                'defaultColDef': {
+                                    'resizable': True,
+                                    'sortable': True
+                                }
+                            }).classes('w-full flex-grow').props('flat bordered dark')
+
+                def reset_details_view():
+                    tx_details_container.clear()
+                    with tx_details_container:
+                        with ui.column().classes('w-full h-full justify-center items-center opacity-50'):
+                            ui.icon('touch_app', size='4xl').classes('text-slate-600 mb-4')
+                            ui.label('Select a category to view transactions').classes('text-slate-500 text-lg')
+
+                # Bind the Click Event (Using the clean on_point_click we discussed)
+                chart_cat.on_point_click(lambda e: show_category_details(e.data["name"]))
 
     # --- STARTUP ---
     

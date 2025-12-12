@@ -39,6 +39,28 @@ class FinanceEngine:
         self.filter_data("All Years", "All Months")
         return f"Loaded {len(self.master_df)} transactions"
     
+    def get_transactions_by_category(self, category):
+        """Returns a list of transactions for a specific category from the active view."""
+        if self.active_df.empty:
+            return []
+        
+        # Filter active data for this category
+        df = self.active_df[self.active_df['Category'] == category].copy()
+        
+        # Sort by Date (Newest first)
+        df.sort_values('Date', ascending=False, inplace=True)
+        
+        # Format for UI
+        records = []
+        for _, row in df.iterrows():
+            records.append({
+                'Date': row['Date'].strftime('%d/%m/%Y'),
+                'Description': row['Desc'],
+                'Amount': row['Amount']
+            })
+        
+        return records
+    
     def filter_data(self, year, month):
         """The important function, which updates the active_df based on selected dropdowns."""
         self.current_year = year

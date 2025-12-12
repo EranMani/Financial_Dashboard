@@ -187,13 +187,14 @@ def _normalize_data(df: pd.DataFrame, source_type: str) -> pd.DataFrame:
 
     # --- CREDIT CARD LOGIC ---
     elif source_type == 'credit_card':
-        desc_col = next((c for c in cols if 'שם בית' in c or 'Name' in c or 'עסק' in c), None)
+        # FIX: We added "and 'תאריך' not in c" to prevent matching 'תאריך עסקה'
+        desc_col = next((c for c in cols if ('שם בית' in c or 'Name' in c or 'עסק' in c) and 'תאריך' not in c and 'Date' not in c), None)
+        
         amount_col = next((c for c in cols if 'סכום' in c and ('חיוב' in c or 'Amount' in c)), None)
         
         norm['Desc'] = df[desc_col].fillna('') if desc_col else "Unknown"
         
         if amount_col:
-            # Credit cards are usually positive numbers representing debt, so we flip to negative
             raw_amount = pd.to_numeric(df[amount_col], errors='coerce').fillna(0)
             norm['Amount'] = raw_amount * -1
         else:
