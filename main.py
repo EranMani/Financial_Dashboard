@@ -77,13 +77,18 @@ def dashboard():
 
     # --- HELPER: UI COMPONENTS ---
     def render_kpi_card(title, value, icon, color, sub_text, display_value):
-        with ui.card().classes('p-5 rounded-xl border border-slate-700 bg-slate-800 shadow-sm hover:shadow-md transition-shadow'):
+        card_classes = f'p-5 rounded-xl border border-{color}/30 bg-{color}/15 shadow-sm hover:shadow-md transition-all'
+        
+        with ui.card().classes(card_classes):
             with ui.row().classes('justify-between items-start w-full'):
                 with ui.column().classes('gap-1'):
                     ui.label(title).classes('text-slate-400 text-sm font-medium uppercase tracking-wider')
                     ui.label(display_value).classes(f'text-2xl font-bold text-white')
-                with ui.element('div').classes(f'p-3 rounded-lg bg-{color}/10 text-{color}'):
+                
+                # Icon box with slightly stronger color (20% opacity)
+                with ui.element('div').classes(f'p-3 rounded-lg bg-{color}/20 text-{color}'):
                     ui.icon(icon, size='sm')
+            
             ui.label(sub_text).classes(f'text-xs font-medium mt-3 text-{color}')
 
     def render_breakdown_card(title, items, is_income):
