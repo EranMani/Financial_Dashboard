@@ -96,9 +96,9 @@ def dashboard():
             # --- Header ---
             with ui.row().classes('items-center justify-between w-full mb-6'):
                 with ui.row().classes('items-center gap-3'):
-                    # Small colored pill next to title
                     with ui.element('div').classes(f'w-1 h-6 rounded-full {"bg-emerald-500" if is_income else "bg-rose-500"}'): pass
-                    ui.label(title).classes('text-lg font-bold text-slate-100')
+                    # Increased header size slightly
+                    ui.label(title).classes('text-xl font-bold text-slate-100')
                 ui.button(icon='more_horiz').props('flat round dense color=grey-6')
             
             # --- List Area ---
@@ -108,34 +108,30 @@ def dashboard():
                 
                 for item in items:
                     icon_name = item.get('icon', 'circle') 
-                    
-                    # 1. Determine Color
                     bar_color = "bg-emerald-500" if is_income else "bg-rose-500"
                     
-                    # 2. Row Container
-                    with ui.row().classes('w-full justify-between items-center mb-4 group cursor-pointer hover:bg-slate-700/30 p-2 rounded-lg transition-colors'):
+                    with ui.row() \
+                        .classes('w-full justify-between items-center mb-2 group cursor-pointer hover:bg-slate-700/30 p-2 rounded-lg transition-colors'):
                         
                         # Left Side: Icon + Details
-                        with ui.row().classes('items-center gap-3 flex-grow'):
-                            # Icon Box
-                            with ui.element('div').classes('p-2 rounded-lg bg-slate-700 text-slate-300 group-hover:text-white group-hover:bg-blue-500/20 transition-all'):
-                                ui.icon(icon_name, size='xs')
+                        with ui.row().classes('items-center gap-2 flex-grow'): # Increased gap from gap-3 to gap-4
                             
-                            # Text & Progress Bar Column (Added flex-grow so the bar takes available space)
-                            with ui.column().classes('gap-1 flex-grow min-w-[100px]'):
-                                # Row for Name and %
+                            # Icon Box - Increased padding (p-3) and icon size ('sm')
+                            with ui.element('div').classes('p-3 rounded-lg bg-slate-700 text-slate-300 group-hover:text-white group-hover:bg-blue-500/20 transition-all'):
+                                ui.icon(icon_name, size='sm') 
+                            
+                            with ui.column().classes('gap-1 flex-grow min-w-[200px]'):
                                 with ui.row().classes('justify-between w-full'):
-                                    ui.label(item['category']).classes('font-medium text-slate-200 text-sm')
-                                    ui.label(f"{item['pct']}%").classes('text-xs text-slate-500')
+                                    # Category Name: Increased to text-base (was text-sm)
+                                    ui.label(item['category']).classes('font-medium text-slate-200 text-base')
+                                    # Percentage: Increased to text-sm (was text-xs)
+                                    ui.label(f"{item['pct']}%").classes('text-sm text-slate-500')
                                 
-                                # THE PROGRESS BAR
-                                # Outer gray background
-                                with ui.element('div').classes('w-full h-1.5 rounded-full bg-slate-700 overflow-hidden'):
-                                    # Inner colored bar with dynamic width
+                                with ui.element('div').classes('w-full h-2 rounded-full bg-slate-700 overflow-hidden'): # Thicker bar (h-2)
                                     ui.element('div').classes(f'h-full rounded-full {bar_color}').style(f"width: {item['pct']}%")
 
-                        # Right Side: Amount (Fixed width to prevent jumping)
-                        ui.label(f"{item['amount']:,.0f} ₪").classes('font-bold text-slate-200 text-sm ml-4')
+                        # Amount: Increased to text-base (was text-sm)
+                        ui.label(f"{item['amount']:,.0f} ₪").classes('font-bold text-slate-200 text-base ml-4')
 
     # --- LAYOUT CONSTRUCTION ---
     with ui.column().classes('w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6'):
@@ -191,16 +187,7 @@ def dashboard():
                         sel_month = ui.select(engine.available_months, value=engine.current_month, on_change=lambda e: change_month(e.value)).props('standout="bg-grey-9 text-white" dense options-dense borderless').classes('text-sm text-slate-400 w-28 text-center')
                         ui.button(icon='chevron_right', on_click=lambda: nav_month(1)).props('flat dense color=grey-4')
 
-                    # Refresh Button
-                    async def reload_data():
-                        ui.notify("Refreshing data...")
-                        msg = await app.loop.run_in_executor(None, engine.load_data)
-                        ui.notify(msg)
-                        sel_year.options = engine.available_years
-                        sel_year.value = engine.current_year
-                        refresh_ui()
-                        
-                    ui.button(icon='refresh', on_click=reload_data).classes('bg-slate-700 text-slate-300 border border-slate-600 hover:bg-slate-600 shadow-sm w-10 h-10 p-0 ml-2')
+                    
 
                     # User Avatar (Preserved)
                     with ui.row().classes('items-center gap-3 border-l border-slate-600 pl-6'):
