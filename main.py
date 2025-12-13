@@ -274,7 +274,7 @@ def dashboard():
                                     },
                                     'data': [] 
                                 }]
-                            }).classes('h-full w-full')
+                            }).classes('w-full flex-grow')
 
                     # --- RIGHT COLUMN: DETAILS TABLE ---
                     with ui.card().classes('lg:col-span-2 p-6 rounded-xl shadow-sm border border-slate-700 bg-slate-800 h-[650px] flex flex-col') as tx_details_container:
@@ -348,4 +348,4 @@ def dashboard():
     refresh_ui()
 
 # --- RUN ---
-ui.run(title="Finance Dashboard", dark=True)
+ui.run(title="Finance Dashboard", dark=True, port=8085)
